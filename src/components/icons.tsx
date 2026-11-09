@@ -1,0 +1,10 @@
+const line = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.4, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
+export const MenuIcon = () => <svg {...line}><path d="M3 6.5h18M3 12h18M3 17.5h18" /></svg>;
+export const CloseIcon = () => <svg {...line}><path d="M5 5l14 14M19 5L5 19" /></svg>;
+export const SearchIcon = () => <svg {...line}><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5L21 21" /></svg>;
+export const CartIcon = () => <svg {...line}><path d="M2.5 5h3.2l2.3 10.5h10.8L21 7.5H6.3" /><circle cx="9.5" cy="19.2" r="1.2" /><circle cx="16.8" cy="19.2" r="1.2" /></svg>;
+export const ArrowIcon = () => <svg {...line} width={24} height={24}><path d="M4 12h16M14 6l6 6-6 6" /></svg>;
+export const BackIcon = () => <svg {...line} width={24} height={24}><path d="M20 12H4M10 6l-6 6 6 6" /></svg>;
+const social = { width: 28, height: 28, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
+export const FacebookIcon = () => <svg {...social}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" /></svg>;
+export const InstagramIcon = () => <svg {...social}><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><path d="M17.5 6.5h.01" /></svg>;

@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-ink font-sans text-bone antialiased; letter-spacing: 0.04em; }
+  :focus-visible { outline: 1px solid #fff; outline-offset: 4px; }
+  ::selection { background: #fff; color: #000; }
+  input, select, textarea, button { letter-spacing: inherit; }
+}
+
+@layer components {
+  /* Solid white button, outline button: both rectangular, uppercase, wide-tracked */
+  .btn { @apply inline-flex items-center justify-center gap-2 border border-bone bg-bone px-8 py-4 text-sm font-medium uppercase tracking-[0.16em] text-ink transition-colors hover:bg-transparent hover:text-bone disabled:pointer-events-none disabled:opacity-40; }
+  .btn-accent { @apply btn; }
+  .btn-line { @apply inline-flex items-center justify-center gap-2 border border-white/60 px-8 py-4 text-sm font-medium uppercase tracking-[0.16em] text-bone transition-colors hover:border-bone hover:bg-bone hover:text-ink disabled:pointer-events-none disabled:opacity-40; }
+  .field { @apply w-full border border-white/35 bg-transparent px-4 py-3.5 text-sm text-bone placeholder:text-white/50 focus:border-bone focus:outline-none; }
+  /* Option pills (sizes, colors), same rounded-pill language as the Sold out label */
+  .size { @apply flex h-11 min-w-[3rem] items-center justify-center rounded-full border border-white/40 px-4 text-sm uppercase transition-colors hover:border-bone; }
+  .size[aria-checked="true"] { @apply border-bone bg-bone text-ink; }
+  .size:disabled { @apply cursor-not-allowed text-white/35 line-through hover:border-white/40; }
+  .pill { @apply rounded-full border border-white px-4 py-1 text-sm tracking-[0.14em]; }
+  .eyebrow { @apply text-xs font-medium uppercase tracking-[0.2em] text-white/65; }
+  .h-display { @apply font-normal uppercase tracking-[0.08em]; }
+  .row-link { @apply flex items-center justify-between border-b border-white py-6 text-lg uppercase tracking-[0.14em]; }
+}
+
+.text-accent { color: var(--accent); }
+
+@keyframes marquee { to { transform: translateX(-50%); } }
+.marquee-track { animation: marquee 40s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  * { transition-duration: 0.01ms !important; }
+}
