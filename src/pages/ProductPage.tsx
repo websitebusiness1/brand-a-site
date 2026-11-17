@@ -4,6 +4,7 @@ import { formatPHP } from '@/lib/format';
 import { publicImageUrl } from '@/lib/storage';
 import { useCart, CartItem } from '@/lib/cart';
 import { useSite, STORE_SLUG } from '@/site/SiteProvider';
+import Gallery from '@/components/Gallery';
 
 const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
 const rank = (s: string) => { const i = SIZE_ORDER.indexOf(s.toUpperCase()); return i === -1 ? 99 : i; };
@@ -67,29 +68,12 @@ export default function ProductPage() {
   return (
     <div className="mx-auto max-w-[90rem] px-4 py-8 sm:px-8 sm:py-12">
       <Link to="/shop" className="eyebrow hover:text-bone">← Shop</Link>
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_26rem] lg:gap-14">
-        <div>
-          {images.length === 0 ? (
-            <div className="flex aspect-[4/5] items-center justify-center bg-white/[0.06] px-6 text-center text-xl uppercase tracking-[0.2em] text-white/40">{product.name}</div>
-          ) : (
-            <>
-              <ul className="-mx-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 lg:hidden" aria-label="Product photos">
-                {images.map((img, i) => <li key={img.id} className="w-[86vw] shrink-0 snap-center"><img src={publicImageUrl(img.storage_path) ?? ''} alt={img.alt_text || `${product.name} photo ${i + 1}`} className="aspect-[4/5] w-full object-cover" /></li>)}
-              </ul>
-              <ul className="hidden gap-3 lg:grid lg:grid-cols-2" aria-label="Product photos">
-                {images.map((img, i) => (
-                  <li key={img.id} className={images.length % 2 === 1 && i === 0 ? 'col-span-2' : ''}>
-                    <img src={publicImageUrl(img.storage_path) ?? ''} alt={img.alt_text || `${product.name} photo ${i + 1}`} className="aspect-[4/5] w-full object-cover" />
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </div>
+      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_24rem] lg:gap-14">
+        <Gallery images={images} name={product.name} />
 
         <div className="lg:sticky lg:top-28 lg:self-start">
           <p className="eyebrow">{product.category}</p>
-          <h1 className="h-display mt-2 text-2xl sm:text-3xl">{product.name}</h1>
+          <h1 className="mt-2 text-4xl sm:text-5xl">{product.name}</h1>
           <p className="mt-4 text-xl">
             {formatPHP(product.price)}
             {onSale && <span className="ml-3 text-base text-white/50 line-through">{formatPHP(product.compare_at_price as number)}</span>}

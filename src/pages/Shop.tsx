@@ -28,12 +28,12 @@ export default function Shop() {
 
   return (
     <div className="mx-auto max-w-[90rem] px-4 py-10 sm:px-8 sm:py-14">
-      <h1 className="text-2xl uppercase tracking-[0.06em] sm:text-3xl">{title}</h1>
+      <h1 className="text-5xl sm:text-7xl">{title}</h1>
 
       <div className="mt-6 flex flex-wrap gap-2" role="group" aria-label="Collections">
         {['all', 'new', ...categories].map((c) => (
           <button key={c} type="button" aria-pressed={cat === c}
-            className={`rounded-full border px-4 py-2 text-xs uppercase tracking-[0.14em] transition-colors ${cat === c ? 'border-bone bg-bone text-ink' : 'border-white/40 hover:border-bone'}`}
+            className={`border px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] transition-colors ${cat === c ? 'border-bone bg-bone text-ink' : 'border-white/40 hover:border-bone'}`}
             onClick={() => setCat(c)}>{c === 'all' ? 'All' : c === 'new' ? 'What’s new?' : c}</button>
         ))}
       </div>

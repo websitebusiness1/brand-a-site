@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useCart } from '@/lib/cart';
 import { safeUrl } from '@/lib/theme';
 import { publicImageUrl } from '@/lib/storage';
@@ -9,7 +9,7 @@ import SearchOverlay from './SearchOverlay';
 import { ArrowIcon, BackIcon, CartIcon, CloseIcon, FacebookIcon, InstagramIcon, MenuIcon, SearchIcon } from './icons';
 
 export default function Header() {
-  const { store, settings, products, openCart } = useSite();
+  const { store, settings, products, lookbooks, videos, openCart } = useSite();
   const { count } = useCart();
   const { pathname } = useLocation();
   const [menu, setMenu] = useState<'closed' | 'main' | 'shop'>('closed');
@@ -31,24 +31,40 @@ export default function Header() {
   const cartButton = (
     <button type="button" onClick={() => { setMenu('closed'); openCart(); }} className="relative p-2" aria-label={`Open cart, ${count} item${count === 1 ? '' : 's'}`}>
       <CartIcon />
-      {count > 0 && <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-bone px-1 text-[11px] font-semibold leading-none text-ink">{count}</span>}
+      {count > 0 && <span className="absolute -right-0.5 top-0 flex h-[18px] min-w-[18px] items-center justify-center bg-accent px-1 text-[11px] font-bold leading-none">{count}</span>}
     </button>
   );
+  const brand = logo
+    ? <img src={logo} alt={store.name} className="h-9 w-auto max-w-[11rem] object-contain" />
+    : <span className="text-xl uppercase tracking-[0.12em] sm:text-2xl" style={{ fontFamily: 'var(--font-heading)' }}>{store.name}</span>;
+  const link = ({ isActive }: { isActive: boolean }) => `px-3 py-2 text-xs font-medium uppercase tracking-[0.2em] transition-colors ${isActive ? 'text-bone' : 'text-white/60 hover:text-bone'}`;
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-ink">
+      <header className="sticky top-0 z-40 bg-ink/90 backdrop-blur">
         {settings?.announcement && <Marquee text={settings.announcement} />}
-        <div className="mx-auto grid max-w-[90rem] grid-cols-[1fr_auto_1fr] items-center px-3 py-3 sm:px-8">
-          <div className="flex items-center">
-            <button type="button" className="p-2" onClick={() => setMenu('main')} aria-label="Open menu" aria-expanded={menu !== 'closed'}><MenuIcon /></button>
+        <div className="mx-auto max-w-[90rem] border-b border-white/15 px-3 py-3 sm:px-8">
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center md:hidden">
+            <div><button type="button" className="p-2" onClick={() => setMenu('main')} aria-label="Open menu" aria-expanded={menu !== 'closed'}><MenuIcon /></button></div>
+            <Link to="/" className="flex justify-center px-2" aria-label={`${store.name} home`}>{brand}</Link>
+            <div className="flex items-center justify-end gap-1">
+              <button type="button" className="p-2" onClick={() => setSearching(true)} aria-label="Search"><SearchIcon /></button>
+              {cartButton}
+            </div>
           </div>
-          <Link to="/" className="flex justify-center px-2" aria-label={`${store.name} home`}>
-            {logo ? <img src={logo} alt={store.name} className="h-9 w-auto max-w-[11rem] object-contain" /> : <span className="text-xl font-medium uppercase tracking-[0.28em] sm:text-2xl">{store.name}</span>}
-          </Link>
-          <div className="flex items-center justify-end gap-1">
-            <button type="button" className="p-2" onClick={() => setSearching(true)} aria-label="Search"><SearchIcon /></button>
-            {cartButton}
+          <div className="hidden items-center justify-between gap-8 md:flex">
+            <Link to="/" aria-label={`${store.name} home`}>{brand}</Link>
+            <nav aria-label="Main" className="flex items-center">
+              <NavLink to="/shop" end className={link}>Shop</NavLink>
+              <NavLink to="/shop?c=new" className={link}>New</NavLink>
+              {lookbooks.length > 0 && <NavLink to="/lookbook" className={link}>Lookbook</NavLink>}
+              {videos.length > 0 && <NavLink to="/videos" className={link}>Videos</NavLink>}
+              <NavLink to="/contact" className={link}>Contact</NavLink>
+            </nav>
+            <div className="flex items-center gap-1">
+              <button type="button" className="p-2" onClick={() => setSearching(true)} aria-label="Search"><SearchIcon /></button>
+              {cartButton}
+            </div>
           </div>
         </div>
       </header>
@@ -59,12 +75,13 @@ export default function Header() {
             <button type="button" className="p-2" onClick={() => setMenu('closed')} aria-label="Close menu"><CloseIcon /></button>
             {cartButton}
           </div>
-
-          <nav aria-label="Menu" className="mt-16 mr-6 sm:mr-auto sm:max-w-xl">
+          <nav aria-label="Menu" className="mr-6 mt-16 sm:mr-auto sm:max-w-xl">
             {menu === 'main' ? (
               <ul>
                 <li><button type="button" className="row-link w-full px-3 text-left" onClick={() => setMenu('shop')}>Shop <ArrowIcon /></button></li>
                 <li><Link to="/shop?c=new" className="row-link px-3">What’s new?</Link></li>
+                {lookbooks.length > 0 && <li><Link to="/lookbook" className="row-link px-3">Lookbook</Link></li>}
+                {videos.length > 0 && <li><Link to="/videos" className="row-link px-3">Videos</Link></li>}
                 <li><Link to="/shipping" className="row-link px-3">Shipping &amp; payment</Link></li>
                 <li><Link to="/contact" className="row-link px-3">Contact</Link></li>
               </ul>
@@ -78,7 +95,6 @@ export default function Header() {
               </>
             )}
           </nav>
-
           {(fb || ig) && (
             <div className="mt-auto flex gap-8 px-3 pt-16">
               {fb && <a href={fb} target="_blank" rel="noopener noreferrer" aria-label="Facebook"><FacebookIcon /></a>}
@@ -87,7 +103,6 @@ export default function Header() {
           )}
         </div>
       )}
-
       {searching && <SearchOverlay onClose={() => setSearching(false)} />}
     </>
   );

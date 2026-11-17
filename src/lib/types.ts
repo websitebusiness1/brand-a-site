@@ -124,3 +124,12 @@ export interface OrderConfirmationData {
   payment_instructions: string | null;
   items: { product_name: string; variant_label: string | null; unit_price: number; quantity: number; line_total: number }[];
 }
+
+export type SectionType = 'hero' | 'banner' | 'text' | 'products' | 'collections' | 'lookbook' | 'videos';
+export interface HomepageSection {
+  id: string; type: SectionType; title: string | null; body: string | null; image_path: string | null; image_alt: string | null;
+  button_label: string | null; link_url: string | null; config: Record<string, unknown>; sort_order: number;
+}
+export interface Lookbook { id: string; title: string; slug: string; description: string; collection_name: string | null; shoot_date: string | null; sort_order: number }
+export interface LookbookPhoto { id: string; lookbook_id: string; storage_path: string; alt_text: string | null; caption: string | null; sort_order: number; is_cover: boolean }
+export interface Video { id: string; title: string; description: string; source_type: 'upload' | 'url'; video_path: string | null; video_url: string | null; thumbnail_path: string | null; sort_order: number }

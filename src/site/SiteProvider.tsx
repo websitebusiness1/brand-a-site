@@ -1,19 +1,23 @@
-import { createContext, CSSProperties, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { errorMessage } from '@/lib/format';
-import { contrast, readableOn } from '@/lib/theme';
-import type { Product, ProductImage, ProductVariant, Store, StoreSettings } from '@/lib/types';
+import { FontRole, FontsConfig, ROLES, cssFamily, findFont, googleFontsUrl } from '@/lib/fonts';
+import { applyAccent } from '@/lib/accent';
+import type { HomepageSection, Lookbook, LookbookPhoto, Product, ProductImage, ProductVariant, Store, StoreSettings, Video } from '@/lib/types';
 
 export const STORE_SLUG = (import.meta.env.VITE_STORE_SLUG as string | undefined) || 'brand-a';
-const INK = '#050505';
-const HEX = /^#[0-9a-f]{6}$/i;
 
 interface Site {
   store: Store;
   settings: StoreSettings | null;
+  preview: boolean;
+  sections: HomepageSection[];
   products: Product[];
   imagesBy: Map<string, ProductImage[]>;
   variantsBy: Map<string, ProductVariant[]>;
+  lookbooks: Lookbook[];
+  photosBy: Map<string, LookbookPhoto[]>;
+  videos: Video[];
   stockOf: (productId: string) => number;
   catalogLoading: boolean;
   catalogError: string | null;
@@ -23,82 +27,116 @@ interface Site {
   closeCart: () => void;
 }
 
+interface Content {
+  preview: boolean; store: Store; settings: StoreSettings | null; site: { fonts?: FontsConfig } | null;
+  sections: HomepageSection[]; products: Product[]; images: ProductImage[]; variants: ProductVariant[];
+  lookbooks: Lookbook[]; lookbook_photos: LookbookPhoto[]; videos: Video[];
+}
+
 const Ctx = createContext<Site | null>(null);
+export const SiteContext = Ctx;
 export const useSite = (): Site => {
   const c = useContext(Ctx);
   if (!c) throw new Error('useSite must be used inside SiteProvider');
   return c;
 };
 
-type Boot = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; store: Store; settings: StoreSettings | null };
+/** The admin's Preview opens this site with ?preview=<key>. Remember it for the tab so page changes keep showing drafts. */
+function previewKey(): string | null {
+  const fromUrl = new URLSearchParams(window.location.search).get('preview');
+  try {
+    if (fromUrl) { sessionStorage.setItem('site-preview', fromUrl); return fromUrl; }
+    return sessionStorage.getItem('site-preview');
+  } catch { return fromUrl; }
+}
+
+const FONT_VARS: Record<FontRole, string> = { heading: '--font-heading', body: '--font-body', nav: '--font-nav', button: '--font-button' };
+
+/** Applies the brand's chosen fonts. Only fonts on our own allow-list are ever loaded. */
+function applyFonts(fonts: FontsConfig | undefined) {
+  const root = document.documentElement;
+  const families: string[] = [];
+  ROLES.forEach(({ key }) => {
+    const f = fonts?.[key]?.family;
+    if (f && findFont(f)) { root.style.setProperty(FONT_VARS[key], cssFamily(f)); families.push(f); }
+    else root.style.removeProperty(FONT_VARS[key]);
+  });
+  const url = googleFontsUrl(families);
+  let link = document.getElementById('site-fonts') as HTMLLinkElement | null;
+  if (!url) { link?.remove(); return; }
+  if (!link) { link = document.createElement('link'); link.id = 'site-fonts'; link.rel = 'stylesheet'; document.head.appendChild(link); }
+  if (link.href !== url) link.href = url;
+}
+
+type Boot = { status: 'loading' } | { status: 'missing' } | { status: 'ready'; content: Content };
 
 export function SiteProvider({ children }: { children: ReactNode }) {
   const [boot, setBoot] = useState<Boot>({ status: 'loading' });
-  const [products, setProducts] = useState<Product[]>([]);
-  const [images, setImages] = useState<ProductImage[]>([]);
-  const [variants, setVariants] = useState<ProductVariant[]>([]);
-  const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
 
-  const storeId = boot.status === 'ready' ? boot.store.id : null;
+  const fetchContent = useCallback(async (): Promise<Content | null | 'error'> => {
+    const { data, error } = await supabase.rpc('get_site_content', { p_store_slug: STORE_SLUG, p_preview_token: previewKey() });
+    if (error) { setCatalogError(errorMessage(error)); return 'error'; }
+    setCatalogError(null);
+    return (data ?? null) as Content | null;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      // Suspended or archived stores are hidden by the database, so the site shows "unavailable".
-      const { data: store } = await supabase.from('stores').select('*').eq('slug', STORE_SLUG).eq('status', 'active').maybeSingle();
+    fetchContent().then((c) => {
       if (cancelled) return;
-      if (!store) { setBoot({ status: 'missing' }); return; }
-      const { data: settings } = await supabase.from('store_settings').select('*').eq('store_id', (store as Store).id).maybeSingle();
-      if (cancelled) return;
-      setBoot({ status: 'ready', store: store as Store, settings: (settings ?? null) as StoreSettings | null });
-    })();
+      if (c === 'error' || !c) setBoot({ status: 'missing' });
+      else setBoot({ status: 'ready', content: c });
+    });
     return () => { cancelled = true; };
-  }, []);
+  }, [fetchContent]);
 
+  // After an order, stock has changed: refresh quietly.
   const reloadCatalog = useCallback(async () => {
-    if (!storeId) return;
-    const [p, i, v] = await Promise.all([
-      supabase.from('products').select('*').eq('store_id', storeId).eq('status', 'published').order('created_at', { ascending: false }),
-      supabase.from('product_images').select('*').eq('store_id', storeId),
-      supabase.from('product_variants').select('*').eq('store_id', storeId),
-    ]);
-    const err = p.error ?? i.error ?? v.error;
-    setCatalogError(err ? errorMessage(err) : null);
-    setProducts((p.data ?? []) as Product[]);
-    setImages(((i.data ?? []) as ProductImage[]).sort((a, b) => Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order));
-    setVariants((v.data ?? []) as ProductVariant[]);
-    setCatalogLoading(false);
-  }, [storeId]);
+    const c = await fetchContent();
+    if (c && c !== 'error') setBoot({ status: 'ready', content: c });
+  }, [fetchContent]);
 
-  useEffect(() => { reloadCatalog(); }, [reloadCatalog]);
+  const content = boot.status === 'ready' ? boot.content : null;
 
-  const store = boot.status === 'ready' ? boot.store : null;
+  useEffect(() => { if (content) { applyFonts(content.site?.fonts); applyAccent(content.store.brand_colors?.accent); } }, [content]);
   useEffect(() => {
-    if (!store) return;
-    document.title = store.name;
-  }, [store]);
+    if (!content) return;
+    document.title = content.store.name;
+    if (content.preview) {
+      let m = document.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+      if (!m) { m = document.createElement('meta'); m.name = 'robots'; document.head.appendChild(m); }
+      m.content = 'noindex';
+    }
+  }, [content]);
 
   const imagesBy = useMemo(() => {
     const m = new Map<string, ProductImage[]>();
-    images.forEach((i) => m.set(i.product_id, [...(m.get(i.product_id) ?? []), i]));
+    (content?.images ?? []).slice().sort((a, b) => Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order)
+      .forEach((i) => m.set(i.product_id, [...(m.get(i.product_id) ?? []), i]));
     return m;
-  }, [images]);
+  }, [content]);
   const variantsBy = useMemo(() => {
     const m = new Map<string, ProductVariant[]>();
-    variants.filter((v) => v.is_active).forEach((v) => m.set(v.product_id, [...(m.get(v.product_id) ?? []), v]));
+    (content?.variants ?? []).forEach((v) => m.set(v.product_id, [...(m.get(v.product_id) ?? []), v]));
     return m;
-  }, [variants]);
+  }, [content]);
+  const photosBy = useMemo(() => {
+    const m = new Map<string, LookbookPhoto[]>();
+    (content?.lookbook_photos ?? []).slice().sort((a, b) => a.sort_order - b.sort_order)
+      .forEach((p) => m.set(p.lookbook_id, [...(m.get(p.lookbook_id) ?? []), p]));
+    return m;
+  }, [content]);
 
-  const value = useMemo<Site | null>(() => boot.status !== 'ready' ? null : ({
-    store: boot.store,
-    settings: boot.settings,
-    products, imagesBy, variantsBy,
+  const value = useMemo<Site | null>(() => !content ? null : ({
+    store: content.store, settings: content.settings, preview: content.preview,
+    sections: content.sections ?? [], products: content.products ?? [], imagesBy, variantsBy,
+    lookbooks: content.lookbooks ?? [], photosBy, videos: content.videos ?? [],
     stockOf: (id) => (variantsBy.get(id) ?? []).reduce((n, v) => n + v.stock_quantity, 0),
-    catalogLoading, catalogError, reloadCatalog,
+    catalogLoading: false, catalogError, reloadCatalog,
     cartOpen, openCart: () => setCartOpen(true), closeCart: () => setCartOpen(false),
-  }), [boot, products, imagesBy, variantsBy, catalogLoading, catalogError, reloadCatalog, cartOpen]);
+  }), [content, imagesBy, variantsBy, photosBy, catalogError, reloadCatalog, cartOpen]);
 
   if (boot.status === 'loading') {
     return <div className="flex min-h-screen items-center justify-center"><span className="text-sm uppercase tracking-[0.3em] text-white/50">Loading</span></div>;
@@ -106,16 +144,10 @@ export function SiteProvider({ children }: { children: ReactNode }) {
   if (boot.status === 'missing' || !value) {
     return (
       <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-6">
-        <h1 className="h-display text-2xl">Store unavailable</h1>
-        <p className="mt-4 text-white/60">This store isn’t open right now. Please check back soon.</p>
+        <h1 className="text-3xl uppercase tracking-[0.12em]">Store unavailable</h1>
+        <p className="mt-4 text-white/60">This website isn’t open right now. Please check back soon.</p>
       </div>
     );
   }
-
-  // The brand's accent color, but never one that's unreadable on black.
-  const raw = boot.store.brand_colors?.accent;
-  const accent = typeof raw === 'string' && HEX.test(raw) && contrast(raw, INK) >= 4.5 ? raw.toLowerCase() : '#f1efe9';
-  const vars = { '--accent': accent, '--on-accent': readableOn(accent) } as CSSProperties;
-
-  return <Ctx.Provider value={value}><div style={vars} className="min-h-screen">{children}</div></Ctx.Provider>;
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

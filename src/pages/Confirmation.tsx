@@ -33,7 +33,7 @@ export default function Confirmation() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-14 sm:py-20">
       <p className="eyebrow">Thank you. Your order has been placed.</p>
-      <h1 className="h-display mt-3 text-2xl sm:text-3xl [overflow-wrap:anywhere]">{order.order_reference}</h1>
+      <h1 className="mt-3 text-4xl sm:text-6xl [overflow-wrap:anywhere]">{order.order_reference}</h1>
       <p className="mt-3 text-sm text-white/60">Keep this reference. You’ll need it if you contact {order.store.name} about your order. Placed {formatDate(order.created_at)}.</p>
 
       <div className="mt-8 space-y-3 border border-white/20 px-5 py-4 text-sm">

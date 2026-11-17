@@ -9,7 +9,7 @@ import { formatPHP } from './format';
  */
 export function useCartSync(resyncKey = 0) {
   const cart = useCart();
-  const [syncing, setSyncing] = useState(true);
+  const [syncing, setSyncing] = useState(cart.items.length > 0);
   const [notes, setNotes] = useState<string[]>([]);
   const itemsRef = useRef(cart.items);
   itemsRef.current = cart.items;

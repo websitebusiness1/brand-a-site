@@ -56,7 +56,7 @@ export default function CartDrawer() {
                         <p className="shrink-0">{formatPHP(i.price * i.quantity)}</p>
                       </div>
                       <div className="mt-auto flex items-center justify-between pt-3">
-                        <div className="flex items-center rounded-full border border-white/40" role="group" aria-label={`Quantity for ${i.name}`}>
+                        <div className="flex items-center border border-white/40" role="group" aria-label={`Quantity for ${i.name}`}>
                           <button type="button" className="px-4 py-2 disabled:opacity-40" disabled={i.quantity <= 1} onClick={() => cart.setQuantity(i.variantId, i.quantity - 1)} aria-label="Decrease quantity" tabIndex={t}>−</button>
                           <span className="min-w-[1.5rem] text-center" aria-live="polite">{i.quantity}</span>
                           <button type="button" className="px-4 py-2 disabled:opacity-40" disabled={i.quantity >= i.stock} onClick={() => cart.setQuantity(i.variantId, i.quantity + 1)} aria-label="Increase quantity" tabIndex={t}>+</button>

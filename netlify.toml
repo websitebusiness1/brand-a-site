@@ -1,16 +1,11 @@
 [build]
-  command = "npm run build"
+  command = "npm install --include=dev && npm run build"
   publish = "dist"
 
 # Single-page app: every path is served by index.html so refreshes and direct links work.
+# Security headers (including who may show this site in the admin's Preview) are written
+# at build time into dist/_headers by scripts/write-headers.mjs, using the ADMIN_ORIGIN variable.
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    X-Content-Type-Options = "nosniff"
-    X-Frame-Options = "DENY"
-    Referrer-Policy = "strict-origin-when-cross-origin"

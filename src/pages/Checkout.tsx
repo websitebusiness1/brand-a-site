@@ -61,7 +61,7 @@ export default function Checkout() {
 
   return (
     <div className="mx-auto max-w-[70rem] px-4 py-12 sm:px-8 sm:py-16">
-      <h1 className="h-display text-2xl sm:text-3xl">Checkout</h1>
+      <h1 className="text-5xl sm:text-7xl">Checkout</h1>
       {notes.length > 0 && <div className="mt-6 space-y-2 border border-white/20 p-4 text-sm text-white/80">{notes.map((n) => <p key={n}>{n}</p>)}</div>}
 
       <form onSubmit={submit} className="mt-10 grid gap-12 lg:grid-cols-[1fr_24rem]">

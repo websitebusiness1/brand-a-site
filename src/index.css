@@ -2,35 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Streetwear design: pure black, heavy uppercase headings, Space Grotesk labels, square buttons, scroll-reveal motion.
+   Fonts here are the defaults; the brand's admin can override each role (heading, body, nav, button). */
+:root {
+  --font-heading: 'Archivo Black', 'Arial Black', Impact, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-nav: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --font-button: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  --accent: #b08d57;
+  --on-accent: #000;
+}
+
 @layer base {
   html { -webkit-text-size-adjust: 100%; }
-  body { @apply bg-ink font-sans text-bone antialiased; letter-spacing: 0.04em; }
-  :focus-visible { outline: 1px solid #fff; outline-offset: 4px; }
-  ::selection { background: #fff; color: #000; }
+  body { @apply bg-ink text-bone antialiased; font-family: var(--font-body); }
+  h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 400; text-transform: uppercase; line-height: 1.02; }
+  header nav a, header nav button, [aria-label='Menu'] a, [aria-label='Menu'] button, .row-link, footer nav a, .nav-font { font-family: var(--font-nav); }
+  .btn, .btn-accent, .btn-line, .size, .pill, .eyebrow { font-family: var(--font-button); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  ::selection { background: var(--accent); color: var(--on-accent); }
   input, select, textarea, button { letter-spacing: inherit; }
 }
 
 @layer components {
-  /* Solid white button, outline button: both rectangular, uppercase, wide-tracked */
-  .btn { @apply inline-flex items-center justify-center gap-2 border border-bone bg-bone px-8 py-4 text-sm font-medium uppercase tracking-[0.16em] text-ink transition-colors hover:bg-transparent hover:text-bone disabled:pointer-events-none disabled:opacity-40; }
-  .btn-accent { @apply btn; }
-  .btn-line { @apply inline-flex items-center justify-center gap-2 border border-white/60 px-8 py-4 text-sm font-medium uppercase tracking-[0.16em] text-bone transition-colors hover:border-bone hover:bg-bone hover:text-ink disabled:pointer-events-none disabled:opacity-40; }
-  .field { @apply w-full border border-white/35 bg-transparent px-4 py-3.5 text-sm text-bone placeholder:text-white/50 focus:border-bone focus:outline-none; }
-  /* Option pills (sizes, colors), same rounded-pill language as the Sold out label */
-  .size { @apply flex h-11 min-w-[3rem] items-center justify-center rounded-full border border-white/40 px-4 text-sm uppercase transition-colors hover:border-bone; }
+  .btn { @apply inline-flex items-center justify-center gap-2 border border-bone bg-bone px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-ink transition-colors disabled:pointer-events-none disabled:opacity-40; }
+  .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn-accent { @apply btn; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  .btn-accent:hover { @apply bg-bone border-bone text-ink; }
+  .btn-line { @apply inline-flex items-center justify-center gap-2 border border-white/50 px-8 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-bone transition-colors hover:border-bone hover:bg-bone hover:text-ink disabled:pointer-events-none disabled:opacity-40; }
+  .field { @apply w-full border border-white/30 bg-transparent px-4 py-3.5 text-sm text-bone placeholder:text-white/50 focus:border-bone focus:outline-none; }
+  .size { @apply flex h-11 min-w-[3rem] items-center justify-center border border-white/35 px-4 text-sm font-medium uppercase transition-colors hover:border-bone; }
   .size[aria-checked="true"] { @apply border-bone bg-bone text-ink; }
-  .size:disabled { @apply cursor-not-allowed text-white/35 line-through hover:border-white/40; }
-  .pill { @apply rounded-full border border-white px-4 py-1 text-sm tracking-[0.14em]; }
-  .eyebrow { @apply text-xs font-medium uppercase tracking-[0.2em] text-white/65; }
-  .h-display { @apply font-normal uppercase tracking-[0.08em]; }
-  .row-link { @apply flex items-center justify-between border-b border-white py-6 text-lg uppercase tracking-[0.14em]; }
+  .size:disabled { @apply cursor-not-allowed text-white/35 line-through hover:border-white/35; }
+  .pill { @apply border border-white bg-black/60 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em]; }
+  .eyebrow { @apply text-xs font-medium uppercase tracking-[0.22em] text-white/65; }
+  .h-display { @apply uppercase; }
+  .row-link { @apply flex items-center justify-between border-b border-white/70 py-6 text-lg uppercase tracking-[0.14em]; }
 }
 
 .text-accent { color: var(--accent); }
+.bg-accent { background: var(--accent); color: var(--on-accent); }
 
+/* Scroll reveal */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); will-change: opacity, transform; }
+.reveal.in { opacity: 1; transform: none; }
+
+/* Marquee (pauses on hover) */
 @keyframes marquee { to { transform: translateX(-50%); } }
-.marquee-track { animation: marquee 40s linear infinite; }
+.marquee-track { animation: marquee 38s linear infinite; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+/* 3D logo stage: the logo is stacked in layers so it reads as a solid object that slowly turns */
+@keyframes logo-turn { 0% { transform: rotateY(-24deg) rotateX(4deg); } 50% { transform: rotateY(24deg) rotateX(-3deg); } 100% { transform: rotateY(-24deg) rotateX(4deg); } }
+@keyframes logo-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -14px; } }
+.logo-stage { perspective: 1400px; }
+.logo-3d { transform-style: preserve-3d; animation: logo-turn 11s ease-in-out infinite; }
+.logo-float { animation: logo-float 7s ease-in-out infinite; }
+@keyframes scroll-cue { 0%, 100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(8px); opacity: 1; } }
+.scroll-cue { animation: scroll-cue 2s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track { animation: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .marquee-track, .logo-3d, .logo-float, .scroll-cue { animation: none; }
+  html { scroll-behavior: auto; }
   * { transition-duration: 0.01ms !important; }
 }
